@@ -2,6 +2,24 @@ import discord
 import os  # default module
 from dotenv import load_dotenv
 from discord.ext import commands
+import requests
+import numpy as np
+import cohere
+
+API_KEY = "u4uSutHawHYkDkfWHZ0TL0ETVmE1G6lGrLlFYnHW"
+
+co = cohere.Client('u4uSutHawHYkDkfWHZ0TL0ETVmE1G6lGrLlFYnHW')
+BASE_MESSAGE_URL = "https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
+
+
+def get_embeddings(text):
+    embeddings = co.embed(text).embeddings
+    return embeddings
+
+
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 
 load_dotenv()  # load all the variables from the env file
 bot = discord.Bot()
@@ -67,6 +85,28 @@ async def search_messages(ctx: commands.Context, keyword: str):
             await ctx.send(f"Matching messages:\n{part}")
     else:
         await ctx.send(f"No messages found containing '{keyword}'")
+
+
+@bot.slash_command(name="search_embedding", description="Search for messages by embedding")
+async def search(ctx, query: str):
+    search_results = []
+    async for msg in ctx.channel.history(limit=100):
+        embeddings1 = co.embed([query]).embeddings[0]
+        embeddings2 = co.embed([msg.content]).embeddings[0]
+        similarity = cosine_similarity(embeddings1, embeddings2)
+        if similarity > 0.5:
+            search_results.append(msg)
+            print(search_results)
+
+    if len(search_results) > 0:
+        result_str = "Search results:\n\n"
+        for result in search_results:
+            message = result
+            result_str += f"{message.author}: [{message.content}]({message.jump_url})\n"
+
+        await ctx.send(content=result_str)
+    else:
+        await ctx.send("No matching messages found.")
 
 
 bot.run(
