@@ -1,0 +1,5 @@
+py-cord==2.4.0
+python-dotenv
+numpy
+cohere
+requests
