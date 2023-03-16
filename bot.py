@@ -87,7 +87,7 @@ async def search_messages(ctx: commands.Context, keyword: str):
 
 
 @bot.slash_command(name="search_embedding", description="Search for messages by embedding")
-async def search(ctx, query: str):
+async def search(ctx, query: str, n: int):
     search_results = []
     async for msg in ctx.channel.history(limit=100):
         embeddings1 = co.embed([query]).embeddings[0]
@@ -95,38 +95,15 @@ async def search(ctx, query: str):
         similarity = cosine_similarity(embeddings1, embeddings2)
         if similarity > 0.5:
             search_results.append(msg)
-            print(search_results)
+            if len(search_results) == n:
+                embed = discord.Embed(title="Search results", color=0x00ff00)
+                message = search_results[0]
+                embed.add_field(name=message.author.display_name,
+                                value=f"[{message.content}]({message.jump_url})", inline=False)
+                await ctx.send(embed=embed)
+                return
 
-    if len(search_results) > 0:
-        result_str = "Search results:\n\n"
-        for result in search_results:
-            message = result
-            result_str += f"{message.author}: [{message.content}]({message.jump_url})\n"
-
-        await ctx.send(content=result_str)
-    else:
-        await ctx.send("No matching messages found.")
-
-
-@bot.slash_command(name="search_embedding1", description="Search for messages by embedding")
-async def search(ctx, query: str):
-    search_results = []
-    async for msg in ctx.channel.history(limit=100):
-        embeddings1 = co.embed([query]).embeddings[0]
-        embeddings2 = co.embed([msg.content]).embeddings[0]
-        similarity = cosine_similarity(embeddings1, embeddings2)
-        if similarity > 0.5:
-            search_results.append(msg)
-
-    if len(search_results) > 0:
-        embed = discord.Embed(title="Search results", color=0x00ff00)
-        for result in search_results:
-            message = result
-            embed.add_field(name=message.author.display_name,
-                            value=f"[{message.content}]({message.jump_url})", inline=False)
-
-        await ctx.send(embed=embed)
-    else:
+    if len(search_results) == 0:
         await ctx.send("No matching messages found.")
 
 
