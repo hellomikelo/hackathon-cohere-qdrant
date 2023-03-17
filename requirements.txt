@@ -1,0 +1,6 @@
+py-cord 
+datasets 
+qdrant_client==0.11.0 
+cohere 
+python-dotenv 
+time-uuid
